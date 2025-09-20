@@ -83,9 +83,35 @@ def root():
     return RedirectResponse(url="/static/index.html")
 
 
+
+from typing import Optional
+
 @app.get("/activities")
-def get_activities():
-    return activities
+def get_activities(
+    search: Optional[str] = None,
+    sort: Optional[str] = None,
+    category: Optional[str] = None
+):
+    # Prepare activities list
+    filtered = []
+    for name, details in activities.items():
+        # Filter by category (if added in future)
+        if category and (details.get("category") != category):
+            continue
+        # Filter by search
+        if search and search.lower() not in name.lower() and search.lower() not in details["description"].lower():
+            continue
+        filtered.append((name, details))
+
+    # Sort
+    if sort == "name":
+        filtered.sort(key=lambda x: x[0].lower())
+    elif sort == "spots":
+        filtered.sort(key=lambda x: x[1]["max_participants"] - len(x[1]["participants"]), reverse=True)
+    # Add more sort options as needed
+
+    # Return as dict
+    return {name: details for name, details in filtered}
 
 
 @app.post("/activities/{activity_name}/signup")
